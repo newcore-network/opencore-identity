@@ -1,0 +1,16 @@
+CREATE TABLE IF NOT EXISTS accounts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  linked_id VARCHAR(255) UNIQUE NULL,
+  external_source VARCHAR(32) NULL,
+  license VARCHAR(64) UNIQUE,
+  discord VARCHAR(32) UNIQUE,
+  steam VARCHAR(32) UNIQUE,
+  username VARCHAR(64),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  banned BOOLEAN DEFAULT FALSE,
+  ban_reason TEXT,
+  ban_expires TIMESTAMP NULL,
+  permissions JSON DEFAULT '[]'
+);
+
