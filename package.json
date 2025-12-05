@@ -1,7 +1,7 @@
 {
   "name": "@open-core/identity",
   "version": "1.0.0",
-  "description": "Identity module for OpenCore: accounts, auth, permissions.",
+  "description": "Flexible identity and authentication system for OpenCore Framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -11,9 +11,23 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "test": "echo \"No tests yet\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "opencore",
+    "fivem",
+    "framework",
+    "identity",
+    "authentication",
+    "authorization",
+    "permissions",
+    "roles",
+    "rbac"
+  ],
+  "author": "OpenCore Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/newcore-network/opencore-identity.git"
+  },
   "packageManager": "pnpm@10.13.1",
   "dependencies": {
     "@open-core/framework": "^1.0.1-beta.1",
@@ -38,6 +52,8 @@
   },
   "files": [
     "dist",
-    "migrations"
+    "migrations",
+    "LICENSE",
+    "README.md"
   ]
 }

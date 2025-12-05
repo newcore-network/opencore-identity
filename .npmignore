@@ -1,0 +1,7 @@
+src/
+tsconfig.json
+eslint.config.js
+pnpm-lock.yaml
+.cursor/
+*.log
+node_modules/
