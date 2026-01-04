@@ -23,9 +23,7 @@ The recommended way to use the identity system is through **Constructor Injectio
 ```ts
 import { Server } from "@open-core/framework";
 import { AccountService } from "@open-core/identity";
-import { injectable } from "tsyringe";
 
-@injectable()
 @Server.Controller()
 export class MyController {
   // AccountService is automatically injected
