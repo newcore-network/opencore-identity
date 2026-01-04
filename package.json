@@ -1,9 +1,17 @@
 {
   "name": "@open-core/identity",
-  "version": "1.0.0",
-  "description": "Flexible identity and authentication system for OpenCore Framework",
+  "version": "1.2.0",
+  "description": "Enterprise-grade identity, authentication, and authorization plugin for OpenCore Framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rimraf dist",
@@ -30,7 +38,7 @@
   },
   "packageManager": "pnpm@10.13.1",
   "dependencies": {
-    "@open-core/framework": "^1.0.1-beta.1",
+    "@open-core/framework": "^0.2.4",
     "bcrypt": "^6.0.0",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.10.0",
@@ -39,15 +47,12 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-    "@types/node": "^22.7.5",
-    "@typescript-eslint/eslint-plugin": "^8.48.1",
-    "@typescript-eslint/parser": "^8.48.1",
+    "@types/node": "^22.19.1",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.4",
     "prettier": "3.7.1",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.2",
     "typescript": "^5.9.3"
   },
   "files": [

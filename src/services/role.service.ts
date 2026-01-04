@@ -1,143 +1,76 @@
-import { injectable } from "tsyringe";
-
-import type { Role } from "../entities/role.entity";
-import type { CreateRoleInput, UpdateRoleInput } from "../types";
-import { RoleRepository } from "../repositories/role.repository";
+import { injectable, inject } from "tsyringe";
+import { IDENTITY_OPTIONS } from "../tokens";
+import { RoleStore } from "../contracts";
+import type { IdentityOptions, IdentityRole } from "../types";
 
 /**
- * Service for managing roles and their permissions.
- * Handles CRUD operations and permission management for roles.
+ * High-level service for managing security roles and their associated permissions.
+ * 
+ * Provides a programmer-friendly API for role administration, including creation,
+ * updates, and permission retrieval. This service interacts with the configured
+ * {@link RoleStore}.
+ * 
+ * @public
+ * @injectable
  */
 @injectable()
 export class RoleService {
-  constructor(private readonly repo: RoleRepository) {}
+  /**
+   * Initializes a new instance of the RoleService.
+   * 
+   * @param store - Persistence layer for role definitions.
+   * @param options - Identity system configuration options.
+   */
+  constructor(
+    private readonly store: RoleStore,
+    @inject(IDENTITY_OPTIONS) private readonly options: IdentityOptions
+  ) {}
 
   /**
-   * Find a role by its ID.
-   *
-   * @param id - Role ID
-   * @returns The role or null if not found
+   * Persists a new security role definition.
+   * 
+   * @param role - The complete role definition to create.
+   * @returns A promise that resolves when the role is saved.
    */
-  async findById(id: number): Promise<Role | null> {
-    return this.repo.findById(id);
+  async create(role: IdentityRole): Promise<void> {
+    await this.store.save(role);
   }
 
   /**
-   * Find a role by its internal name.
-   *
-   * @param name - Role name (e.g., 'admin', 'user')
-   * @returns The role or null if not found
+   * Updates an existing role's rank or permissions.
+   * 
+   * @param name - The unique technical name of the role to update.
+   * @param data - Partial object containing the fields to modify.
+   * @returns A promise that resolves when the update is complete.
    */
-  async findByName(name: string): Promise<Role | null> {
-    return this.repo.findByName(name);
-  }
+  async update(name: string, data: Partial<Omit<IdentityRole, "name">>): Promise<void> {
+    const existing = await this.store.findByName(name);
+    if (!existing) return;
 
-  /**
-   * Get all roles.
-   *
-   * @returns Array of all roles
-   */
-  async getAll(): Promise<Role[]> {
-    const result = await this.repo.findMany();
-    return result.data;
-  }
-
-  /**
-   * Get the default role for new accounts.
-   *
-   * @returns The default role or null if none is configured
-   */
-  async getDefaultRole(): Promise<Role | null> {
-    return this.repo.getDefaultRole();
-  }
-
-  /**
-   * Create a new role.
-   *
-   * @param input - Role creation data
-   * @returns The created role
-   */
-  async create(input: CreateRoleInput): Promise<Role> {
-    const now = new Date();
-    const role: Role = {
-      id: 0, // Will be set by DB
-      name: input.name,
-      displayName: input.displayName,
-      rank: input.rank,
-      permissions: input.permissions ?? [],
-      isDefault: input.isDefault ?? false,
-      createdAt: now,
-    };
-
-    return this.repo.save(role);
-  }
-
-  /**
-   * Update an existing role.
-   *
-   * @param id - Role ID
-   * @param input - Update data
-   * @returns The updated role or null if not found
-   */
-  async update(id: number, input: UpdateRoleInput): Promise<Role | null> {
-    const existing = await this.repo.findById(id);
-    if (!existing) return null;
-
-    const updated: Role = {
+    await this.store.save({
       ...existing,
-      ...(input.displayName !== undefined && {
-        displayName: input.displayName,
-      }),
-      ...(input.rank !== undefined && { rank: input.rank }),
-      ...(input.permissions !== undefined && {
-        permissions: input.permissions,
-      }),
-    };
-
-    if (input.isDefault !== undefined) {
-      await this.repo.setDefault(id, input.isDefault);
-      updated.isDefault = input.isDefault;
-    }
-
-    return this.repo.save(updated);
+      ...data,
+    });
   }
 
   /**
-   * Delete a role.
-   *
-   * @param id - Role ID
-   * @returns true if deleted, false if not found
+   * Permanently removes a role definition from the system.
+   * 
+   * @param name - The technical name of the role to delete.
+   * @returns A promise that resolves when the role is deleted.
    */
-  async delete(id: number): Promise<boolean> {
-    return this.repo.delete(id);
+  async delete(name: string): Promise<void> {
+    await this.store.delete(name);
   }
 
   /**
-   * Add a permission to a role.
-   *
-   * @param roleId - Role ID
-   * @param permission - Permission string to add
+   * Retrieves the full list of permissions granted to a specific role.
+   * 
+   * @param name - The technical name of the role.
+   * @returns A promise resolving to an array of permission strings.
    */
-  async addPermission(roleId: number, permission: string): Promise<void> {
-    const role = await this.repo.findById(roleId);
-    if (!role) return;
-
-    const permissions = new Set<string>(role.permissions);
-    permissions.add(permission);
-    await this.repo.updatePermissions(roleId, Array.from(permissions));
-  }
-
-  /**
-   * Remove a permission from a role.
-   *
-   * @param roleId - Role ID
-   * @param permission - Permission string to remove
-   */
-  async removePermission(roleId: number, permission: string): Promise<void> {
-    const role = await this.repo.findById(roleId);
-    if (!role) return;
-
-    const filtered = role.permissions.filter((p: string) => p !== permission);
-    await this.repo.updatePermissions(roleId, filtered);
+  async getPermissions(name: string): Promise<string[]> {
+    const role = await this.store.findByName(name);
+    return role?.permissions || [];
   }
 }
