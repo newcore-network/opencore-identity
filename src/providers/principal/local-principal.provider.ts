@@ -105,17 +105,26 @@ export class IdentityPrincipalProvider extends Server.PrincipalProviderContract 
     if (!account) return null;
 
     let role: IdentityRole | undefined;
+    const roleId = account.roleId;
 
-    if (this.options.principal.mode === "roles") {
-      role = this.options.principal.roles?.[account.roleName];
-    } else if (this.roleStore) {
-      const dbRole = await this.roleStore.findByName(account.roleName);
-      if (dbRole) role = dbRole;
+    if (roleId !== undefined && roleId !== null && roleId !== "") {
+      if (this.options.principal.mode === "roles") {
+        role = this.options.principal.roles?.[roleId];
+      } else if (this.roleStore) {
+        const dbRole = await this.roleStore.findById(roleId);
+        if (dbRole) role = dbRole;
+      }
     }
 
     if (!role) {
-      const defaultName = this.options.principal.defaultRole || "user";
-      role = this.options.principal.roles?.[defaultName];
+      const defaultRoleId = this.options.principal.defaultRole;
+      if (defaultRoleId !== undefined && defaultRoleId !== null && defaultRoleId !== "") {
+        role = this.options.principal.roles?.[defaultRoleId];
+        
+        if (!role && this.roleStore && this.options.principal.mode === "db") {
+          role = await this.roleStore.getDefaultRole();
+        }
+      }
     }
 
     if (!role) return null;
@@ -126,13 +135,13 @@ export class IdentityPrincipalProvider extends Server.PrincipalProviderContract 
     );
 
     return {
-      id: account.linkedId,
-      name: role.displayName || role.name,
+      id: linkedId,
+      name: role.displayName || String(role.id),
       rank: role.rank,
       permissions: effectivePermissions,
       meta: {
         accountId: account.id,
-        roleName: role.name,
+        roleId: role.id,
       },
     };
   }

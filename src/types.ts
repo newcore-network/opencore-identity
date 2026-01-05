@@ -1,5 +1,3 @@
-import type { Server } from "@open-core/framework";
-
 /**
  * Authentication strategy modes.
  * 
@@ -35,9 +33,9 @@ export type PrincipalMode = "roles" | "db" | "api";
  */
 export interface IdentityRole {
   /** 
-   * Technical identifier for the role (e.g., 'admin', 'moderator', 'user').
+   * Technical identifier for the role (e.g., 'admin', 1, 'uuid').
    */
-  name: string;
+  id: string | number;
 
   /** 
    * Hierarchical weight. 
@@ -105,13 +103,13 @@ export interface IdentityOptions {
      * 
      * Required when mode is 'roles'.
      */
-    roles?: Record<string, IdentityRole>;
+    roles?: Record<string | number, IdentityRole>;
 
     /** 
-     * The name of the role assigned to newly created accounts.
+     * The ID of the role assigned to newly created accounts.
      * @defaultValue 'user'
      */
-    defaultRole?: string;
+    defaultRole?: string | number;
 
     /** 
      * Time-to-live in milliseconds for cached principal data.
@@ -136,14 +134,7 @@ export interface IdentityAccount {
   /** 
    * Internal unique database/store ID.
    */
-  id: string;
-
-  /** 
-   * External stable ID used by the framework (linkedID).
-   * 
-   * Usually a UUID or an external system ID.
-   */
-  linkedId: string;
+  id: string | number;
 
   /** 
    * Primary connection identifier (e.g., 'license:123...').
@@ -151,9 +142,9 @@ export interface IdentityAccount {
   identifier: string;
 
   /** 
-   * Current technical role name assigned to this account.
+   * Current technical role ID assigned to this account.
    */
-  roleName: string;
+  roleId?: string | number;
 
   /** 
    * Optional technical username for credentials-based authentication.

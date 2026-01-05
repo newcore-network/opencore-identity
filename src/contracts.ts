@@ -48,7 +48,7 @@ export abstract class IdentityStore {
    * @param id - The internal account ID.
    * @param data - Partial object containing fields to update.
    */
-  abstract update(id: string, data: Partial<IdentityAccount>): Promise<void>;
+  abstract update(id: string | number, data: Partial<IdentityAccount>): Promise<void>;
 
   /**
    * Prohibits or allows an account from connecting.
@@ -59,7 +59,7 @@ export abstract class IdentityStore {
    * @param expiresAt - Optional expiration timestamp.
    */
   abstract setBan(
-    id: string,
+    id: string | number,
     banned: boolean,
     reason?: string,
     expiresAt?: Date | null,
@@ -76,12 +76,12 @@ export abstract class IdentityStore {
  */
 export abstract class RoleStore {
   /**
-   * Retrieves a role definition by its technical name.
+   * Retrieves a role definition by its technical identifier.
    * 
-   * @param name - Technical name (e.g., 'admin').
+   * @param id - Technical identifier (e.g., 'admin' or 1).
    * @returns A promise resolving to the role or null if not found.
    */
-  abstract findByName(name: string): Promise<IdentityRole | null>;
+  abstract findById(id: string | number): Promise<IdentityRole | null>;
 
   /**
    * Resolves the default role for newly connected accounts.
@@ -100,7 +100,7 @@ export abstract class RoleStore {
   /**
    * Removes a role from the system.
    * 
-   * @param name - Technical name of the role to delete.
+   * @param id - Technical identifier of the role to delete.
    */
-  abstract delete(name: string): Promise<void>;
+  abstract delete(id: string | number): Promise<void>;
 }
