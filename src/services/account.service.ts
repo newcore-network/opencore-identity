@@ -1,7 +1,6 @@
-import { injectable, inject } from "tsyringe";
-import { IDENTITY_OPTIONS } from "../tokens";
+import { injectable } from "tsyringe";
 import { IdentityStore } from "../contracts";
-import type { IdentityAccount, IdentityOptions } from "../types";
+import type { IdentityAccount } from "../types";
 
 /**
  * High-level service for managing identity accounts and security policies.
@@ -15,8 +14,7 @@ import type { IdentityAccount, IdentityOptions } from "../types";
 @injectable()
 export class AccountService {
   constructor(
-    private readonly store: IdentityStore,
-    @inject(IDENTITY_OPTIONS) private readonly options: IdentityOptions
+    private readonly store: IdentityStore
   ) {}
 
   /**

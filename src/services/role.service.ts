@@ -1,7 +1,6 @@
-import { injectable, inject } from "tsyringe";
-import { IDENTITY_OPTIONS } from "../tokens";
+import { injectable } from "tsyringe";
 import { RoleStore } from "../contracts";
-import type { IdentityOptions, IdentityRole } from "../types";
+import type { IdentityRole } from "../types";
 
 /**
  * High-level service for managing security roles and their associated permissions.
@@ -15,15 +14,8 @@ import type { IdentityOptions, IdentityRole } from "../types";
  */
 @injectable()
 export class RoleService {
-  /**
-   * Initializes a new instance of the RoleService.
-   * 
-   * @param store - Persistence layer for role definitions.
-   * @param options - Identity system configuration options.
-   */
   constructor(
-    private readonly store: RoleStore,
-    @inject(IDENTITY_OPTIONS) private readonly options: IdentityOptions
+    private readonly store: RoleStore
   ) {}
 
   /**
