@@ -42,7 +42,6 @@ export class LocalAuthProvider extends Server.AuthProviderContract {
   constructor(
     @inject(IDENTITY_OPTIONS) private readonly options: IdentityOptions,
     private readonly store: IdentityStore,
-    private readonly config: Server.ConfigService
   ) {
     super();
   }

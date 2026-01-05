@@ -1,11 +1,8 @@
-import { injectable, inject } from "tsyringe";
+import { injectable } from "tsyringe";
 import { Server } from "@open-core/framework";
-import { v4 as uuidv4 } from "uuid";
-import { IDENTITY_OPTIONS } from "../../tokens";
-import { IdentityStore } from "../../contracts";
-import type { IdentityOptions, IdentityAccount } from "../../types";
+import { IdentityStore, RoleStore } from "../../contracts";
+import type { IdentityAccount } from "../../types";
 import bcrypt from "bcryptjs";
-import { PlayerSessionLifecyclePort } from "@open-core/framework/server";
 
 /**
  * Authentication provider for username and password credentials.
@@ -22,16 +19,9 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
   /** Cost factor for bcrypt hashing */
   private readonly saltRounds = 10;
 
-  /**
-   * Initializes a new instance of the CredentialsAuthProvider.
-   * 
-   * @param options - Identity system configuration options.
-   * @param store - Persistence layer for account and credential data.
-   */
   constructor(
-    @inject(IDENTITY_OPTIONS) private readonly options: IdentityOptions,
-    private readonly store: IdentityStore,
-    private readonly lifeCycle: PlayerSessionLifecyclePort
+    private readonly accountStore: IdentityStore<string, string, string>,
+    private readonly roleStore: RoleStore<string>
   ) {
     super();
   }
@@ -54,9 +44,9 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
       return { success: false, error: "Username and password are required" };
     }
 
-    const account = await this.store.findByUsername(username);
+    const account = await this.accountStore.findByUsername(username);
     if (!account) {
-      return { success: false, error: "Invalid credentials" };
+      return { success: false, error: "Account not found" };
     }
 
     const passwordHash = account.passwordHash;
@@ -66,6 +56,7 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
 
     const isValid = await bcrypt.compare(password, passwordHash);
     if (!isValid) {
+      console.log(`compared and is not the same password!`)
       return { success: false, error: "Invalid credentials" };
     }
 
@@ -96,7 +87,7 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
       return { success: false, error: "Username and password are required" };
     }
 
-    const existing = await this.store.findByUsername(username);
+    const existing = await this.accountStore.findByUsername(username);
     if (existing) {
       return { success: false, error: "Username already taken" };
     }
@@ -105,12 +96,13 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
     
     const identifiers = player.getIdentifiers();
     const primaryIdentifier = identifiers[0] || `internal:${username}`;
+    const defaultRole = await this.roleStore.getDefaultRole()
 
-    const account = await this.store.create({
+    const account = await this.accountStore.create({
       username,
       passwordHash,
       identifier: primaryIdentifier,
-      roleId: this.options.principal.defaultRole || "user",
+      roleId: defaultRole.id,
       customPermissions: [],
       isBanned: false,
     });
@@ -130,7 +122,7 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
     const accountId = player.accountID;
     if (!accountId) return { success: false, error: "Not authenticated" };
 
-    const account = await this.store.findByLinkedId(accountId);
+    const account = await this.accountStore.findByLinkedId(accountId);
     if (!account || this.isBanned(account)) {
       return { success: false, error: "Session invalid or account banned" };
     }

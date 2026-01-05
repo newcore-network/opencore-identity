@@ -106,6 +106,8 @@ export abstract class RoleStore<TId = any> {
    */
   abstract findById(id: TId): Promise<IdentityRole | null>;
 
+  abstract findByName(name: string): Promise<IdentityRole | null>
+
   /**
    * Retrieves a role by its hierarchical rank.
    * 

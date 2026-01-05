@@ -149,11 +149,11 @@ export namespace Identity {
 
       // 2. Execute onReady hook
       if (options.hooks?.onReady) {
-        const accounts = container.resolve(AccountServiceImpl);
-        const roles = container.resolve(RoleServiceImpl);
+        const accountService = container.resolve(AccountServiceImpl) as AccountService;
+        const roleService = container.resolve(RoleServiceImpl) as RoleService;
         
         try {
-          await options.hooks.onReady({ accounts, roles });
+          await options.hooks.onReady({ accounts: accountService, roles: roleService, container });
         } catch (err) {
           console.error("[OpenCore-Identity] Error in onReady hook:", err);
         }

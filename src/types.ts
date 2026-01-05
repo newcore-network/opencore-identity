@@ -1,3 +1,6 @@
+import { AccountService } from "./services/account.service";
+import { RoleService } from "./services/role.service";
+
 /**
  * Authentication strategy modes.
  * 
@@ -33,9 +36,12 @@ export type PrincipalMode = "roles" | "db" | "api";
  */
 export interface IdentityRole<TId = any> {
   /** 
-   * Technical identifier for the role (e.g., 'admin', 1, 'uuid').
+   * Technical identifier for the role (e.g., 1, 'uuid').
    */
   id: TId;
+
+  /** name, common used by identifiers 'admin' */
+  name: string
 
   /** 
    * Hierarchical weight. 
@@ -146,8 +152,9 @@ export interface IdentityOptions {
      * Use this to perform database seeding (e.g., creating default roles).
      */
     onReady?: (services: {
-      accounts: any; // Type-erased to avoid circular dependency in index.ts
-      roles: any;
+      accounts: AccountService; // Type-erased to avoid circular dependency
+      roles: RoleService;
+      container: any; // Dependency injection container (DependencyContainer)
     }) => Promise<void> | void;
   };
 }
