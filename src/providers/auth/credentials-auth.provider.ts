@@ -5,6 +5,7 @@ import { IDENTITY_OPTIONS } from "../../tokens";
 import { IdentityStore } from "../../contracts";
 import type { IdentityOptions, IdentityAccount } from "../../types";
 import bcrypt from "bcryptjs";
+import { PlayerSessionLifecyclePort } from "@open-core/framework/server";
 
 /**
  * Authentication provider for username and password credentials.
@@ -29,7 +30,8 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
    */
   constructor(
     @inject(IDENTITY_OPTIONS) private readonly options: IdentityOptions,
-    private readonly store: IdentityStore
+    private readonly store: IdentityStore,
+    private readonly lifeCycle: PlayerSessionLifecyclePort
   ) {
     super();
   }
@@ -142,8 +144,10 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
    * @param player - The framework player entity.
    */
   async logout(player: Server.Player): Promise<void> {
-    // Session state is managed by the framework.
+    player.unlinkAccount()
   }
+
+
 
   /**
    * Internal helper to determine if an account is currently prohibited.

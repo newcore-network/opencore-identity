@@ -39,7 +39,7 @@
   },
   "packageManager": "pnpm@10.13.1",
   "dependencies": {
-    "@open-core/framework": "^0.2.4",
+    "@open-core/framework": "^0.2.6",
     "bcryptjs": "^3.0.3",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.10.0",

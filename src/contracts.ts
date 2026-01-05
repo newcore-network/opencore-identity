@@ -19,6 +19,14 @@ export abstract class IdentityStore {
   abstract findByIdentifier(identifier: string): Promise<IdentityAccount | null>;
 
   /**
+   * Retrieves an account by its unique numeric or internal ID.
+   * 
+   * @param id - The internal account identifier (database ID).
+   * @returns A promise resolving to the account or null if not found.
+   */
+  abstract findById(id: string | number): Promise<IdentityAccount | null>;
+
+  /**
    * Retrieves an account by its linked stable ID.
    * 
    * @param linkedId - The stable ID (e.g., a UUID).
@@ -33,6 +41,21 @@ export abstract class IdentityStore {
    * @returns A promise resolving to the account or null if not found.
    */
   abstract findByUsername(username: string): Promise<IdentityAccount | null>;
+
+  /**
+   * Retrieves all accounts that are currently banned.
+   * 
+   * @returns A promise resolving to an array of banned accounts.
+   */
+  abstract findBanned(): Promise<IdentityAccount[]>;
+
+  /**
+   * Retrieves all accounts assigned to a specific role.
+   * 
+   * @param roleId - The role identifier.
+   * @returns A promise resolving to an array of accounts.
+   */
+  abstract findByRole(roleId: string | number): Promise<IdentityAccount[]>;
 
   /**
    * Persists a new identity account.
@@ -82,6 +105,29 @@ export abstract class RoleStore {
    * @returns A promise resolving to the role or null if not found.
    */
   abstract findById(id: string | number): Promise<IdentityRole | null>;
+
+  /**
+   * Retrieves a role by its hierarchical rank.
+   * 
+   * @param rank - The numeric rank to search for.
+   * @returns A promise resolving to the role or null if not found.
+   */
+  abstract findByRank(rank: number): Promise<IdentityRole | null>;
+
+  /**
+   * Retrieves all roles that grant a specific permission.
+   * 
+   * @param permission - The permission string to search for.
+   * @returns A promise resolving to an array of roles.
+   */
+  abstract findByPermission(permission: string): Promise<IdentityRole[]>;
+
+  /**
+   * Retrieves all registered roles in the system.
+   * 
+   * @returns A promise resolving to an array of all roles.
+   */
+  abstract findAll(): Promise<IdentityRole[]>;
 
   /**
    * Resolves the default role for newly connected accounts.

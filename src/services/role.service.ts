@@ -15,48 +15,43 @@ import type { IdentityRole } from "../types";
 @injectable()
 export class RoleService {
   constructor(
-    private readonly store: RoleStore
+    public readonly store: RoleStore
   ) {}
 
   /**
-   * Persists a new security role definition.
+   * Retrieves all roles that grant a specific permission.
    * 
-   * @param role - The initial role properties (ID is optional).
-   * @returns A promise resolving to the created role.
+   * @param permission - The permission string to search for.
+   * @returns A promise resolving to an array of roles.
    */
-  async create(role: Omit<IdentityRole, "id"> & { id?: string | number }): Promise<IdentityRole> {
-    return this.store.create(role);
+  async findByPermission(permission: string): Promise<IdentityRole[]> {
+    return this.store.findByPermission(permission);
   }
 
   /**
-   * Updates an existing role's rank or permissions.
+   * Retrieves a role by its hierarchical rank.
    * 
-   * @param id - The unique technical identifier of the role to update.
-   * @param data - Partial object containing the fields to modify.
-   * @returns A promise that resolves when the update is complete.
+   * @param rank - The numeric rank to search for.
+   * @returns A promise resolving to the role or null if not found.
    */
-  async update(id: string | number, data: Partial<Omit<IdentityRole, "id">>): Promise<void> {
-    await this.store.update(id, data);
+  async findByRank(rank: number): Promise<IdentityRole | null> {
+    return this.store.findByRank(rank);
   }
 
   /**
-   * Permanently removes a role definition from the system.
+   * Checks if a role is higher or equal than another based on rank.
    * 
-   * @param id - The technical identifier of the role to delete.
-   * @returns A promise that resolves when the role is deleted.
+   * @param roleId - The role to check.
+   * @param requiredRoleId - The required role.
+   * @returns True if roleId has equal or higher rank.
    */
-  async delete(id: string | number): Promise<void> {
-    await this.store.delete(id);
-  }
+  async isHigherOrEqual(roleId: string | number, requiredRoleId: string | number): Promise<boolean> {
+    const [role, required] = await Promise.all([
+      this.store.findById(roleId),
+      this.store.findById(requiredRoleId)
+    ]);
 
-  /**
-   * Retrieves the full list of permissions granted to a specific role.
-   * 
-   * @param id - The technical identifier of the role.
-   * @returns A promise resolving to an array of permission strings.
-   */
-  async getPermissions(id: string | number): Promise<string[]> {
-    const role = await this.store.findById(id);
-    return role?.permissions || [];
+    if (!role || !required) return false;
+    return role.rank >= required.rank;
   }
 }

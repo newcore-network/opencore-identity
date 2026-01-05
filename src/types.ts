@@ -139,7 +139,7 @@ export interface IdentityAccount {
   /** 
    * Primary connection identifier (e.g., 'license:123...').
    */
-  identifier: string;
+  identifier?: string;
 
   /** 
    * Current technical role ID assigned to this account.

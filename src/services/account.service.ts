@@ -1,5 +1,5 @@
 import { injectable } from "tsyringe";
-import { IdentityStore } from "../contracts";
+import { IdentityStore, RoleStore } from "../contracts";
 import type { IdentityAccount } from "../types";
 
 /**
@@ -14,58 +14,69 @@ import type { IdentityAccount } from "../types";
 @injectable()
 export class AccountService {
   constructor(
-    private readonly store: IdentityStore
+    public readonly store: IdentityStore
   ) {}
 
   /**
-   * Retrieves an account by its unique numeric or internal ID.
+   * Retrieves all accounts assigned to a specific role.
    * 
-   * @param id - The internal account identifier.
-   * @returns A promise resolving to the account or null if not found.
+   * @param roleId - The role identifier.
+   * @returns A promise resolving to an array of accounts.
    */
-  async findById(id: string): Promise<IdentityAccount | null> {
-    return this.store.findByLinkedId(id); // Using linkedId as the primary public handle
+  async findByRole(roleId: string | number): Promise<IdentityAccount[]> {
+    return this.store.findByRole(roleId);
   }
 
   /**
-   * Retrieves an account by its stable linked ID.
+   * Retrieves all accounts that are currently prohibited from connecting.
    * 
-   * @param linkedId - The stable ID (UUID or external system ID).
-   * @returns A promise resolving to the account or null if not found.
+   * @returns A promise resolving to an array of banned accounts.
    */
-  async findByLinkedId(linkedId: string): Promise<IdentityAccount | null> {
-    return this.store.findByLinkedId(linkedId);
+  async findBanned(): Promise<IdentityAccount[]> {
+    return this.store.findBanned();
+  }
+  async assignRole(
+    accountId: string | number, 
+    roleId: string | number,
+    options: { clearCustomPermissions?: boolean } = {}
+  ): Promise<void> {
+    const updateData: Partial<IdentityAccount> = { roleId };
+    
+    if (options.clearCustomPermissions) {
+      updateData.customPermissions = [];
+    }
+
+    await this.store.update(accountId, updateData);
   }
 
   /**
-   * Persists a new identity account.
+   * Checks if an account has a specific permission, considering both role and custom overrides.
    * 
-   * @param data - Initial account properties. ID can be provided or left to the store.
-   * @returns A promise resolving to the fully created account object.
+   * @param accountId - The account identifier.
+   * @param permission - The permission string to check.
+   * @param roleStore - Required to resolve the role's base permissions.
    */
-  async create(data: Omit<IdentityAccount, "id"> & { id?: string | number; passwordHash?: string }): Promise<IdentityAccount> {
-    return this.store.create(data);
-  }
+  async hasPermission(
+    accountId: string | number, 
+    permission: string,
+    roleStore: RoleStore
+  ): Promise<boolean> {
+    const account = await this.store.findByLinkedId(String(accountId));
+    if (!account) return false;
 
-  /**
-   * Updates an existing account's metadata or status.
-   * 
-   * @param id - The internal account ID.
-   * @param data - Partial object containing fields to update.
-   * @returns A promise that resolves when the update is complete.
-   */
-  async update(id: string | number, data: Partial<Omit<IdentityAccount, "id">>): Promise<void> {
-    await this.store.update(id, data);
-  }
+    if (!account.roleId) return account.customPermissions.includes(permission);
 
-  /**
-   * Assigns a security role to an account.
-   * 
-   * @param accountId - The unique ID of the account.
-   * @param roleId - Technical identifier of the role to assign.
-   */
-  async assignRole(accountId: string | number, roleId: string | number): Promise<void> {
-    await this.update(accountId, { roleId });
+    const role = await roleStore.findById(account.roleId);
+    const basePermissions = role?.permissions || [];
+    
+    // Simple resolution logic (could be more complex with wildcards)
+    const permissions = new Set(basePermissions);
+    for (const override of account.customPermissions) {
+      if (override === `+${permission}` || override === permission) return true;
+      if (override === `-${permission}`) return false;
+    }
+    
+    return permissions.has(permission) || permissions.has("*");
   }
 
   /**
