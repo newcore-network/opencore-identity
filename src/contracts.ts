@@ -9,7 +9,7 @@ import type { IdentityAccount, IdentityRole } from "./types";
  * 
  * @public
  */
-export abstract class IdentityStore {
+export abstract class IdentityStore<TId = any, TLinkedId = any, TRoleId = any> {
   /**
    * Retrieves an account by its primary connection identifier.
    * 
@@ -24,7 +24,7 @@ export abstract class IdentityStore {
    * @param id - The internal account identifier (database ID).
    * @returns A promise resolving to the account or null if not found.
    */
-  abstract findById(id: string | number): Promise<IdentityAccount | null>;
+  abstract findById(id: TId): Promise<IdentityAccount | null>;
 
   /**
    * Retrieves an account by its linked stable ID.
@@ -32,7 +32,7 @@ export abstract class IdentityStore {
    * @param linkedId - The stable ID (e.g., a UUID).
    * @returns A promise resolving to the account or null if not found.
    */
-  abstract findByLinkedId(linkedId: string): Promise<IdentityAccount | null>;
+  abstract findByLinkedId(linkedId: TLinkedId): Promise<IdentityAccount | null>;
 
   /**
    * Retrieves an account by its unique username.
@@ -55,7 +55,7 @@ export abstract class IdentityStore {
    * @param roleId - The role identifier.
    * @returns A promise resolving to an array of accounts.
    */
-  abstract findByRole(roleId: string | number): Promise<IdentityAccount[]>;
+  abstract findByRole(roleId: TRoleId): Promise<IdentityAccount[]>;
 
   /**
    * Persists a new identity account.
@@ -63,7 +63,7 @@ export abstract class IdentityStore {
    * @param data - Initial account properties (ID is optional as it's usually handled by the store).
    * @returns A promise resolving to the fully created account object.
    */
-  abstract create(data: Omit<IdentityAccount, "id"> & { id?: string | number; passwordHash?: string }): Promise<IdentityAccount>;
+  abstract create(data: Omit<IdentityAccount, "id"> & { id?: TId; passwordHash?: string }): Promise<IdentityAccount>;
 
   /**
    * Updates an existing account's metadata or status.
@@ -71,7 +71,7 @@ export abstract class IdentityStore {
    * @param id - The internal account ID.
    * @param data - Partial object containing fields to update.
    */
-  abstract update(id: string | number, data: Partial<Omit<IdentityAccount, "id">>): Promise<void>;
+  abstract update(id: TId, data: Partial<Omit<IdentityAccount, "id">>): Promise<void>;
 
   /**
    * Prohibits or allows an account from connecting.
@@ -82,7 +82,7 @@ export abstract class IdentityStore {
    * @param expiresAt - Optional expiration timestamp.
    */
   abstract setBan(
-    id: string | number,
+    id: TId,
     banned: boolean,
     reason?: string,
     expiresAt?: Date | null,
@@ -97,14 +97,14 @@ export abstract class IdentityStore {
  * 
  * @public
  */
-export abstract class RoleStore {
+export abstract class RoleStore<TId = any> {
   /**
    * Retrieves a role definition by its technical identifier.
    * 
    * @param id - Technical identifier (e.g., 'admin' or 1).
    * @returns A promise resolving to the role or null if not found.
    */
-  abstract findById(id: string | number): Promise<IdentityRole | null>;
+  abstract findById(id: TId): Promise<IdentityRole | null>;
 
   /**
    * Retrieves a role by its hierarchical rank.
@@ -142,7 +142,7 @@ export abstract class RoleStore {
    * @param role - Initial role properties. ID can be provided or left to the store.
    * @returns A promise resolving to the fully created role object.
    */
-  abstract create(role: Omit<IdentityRole, "id"> & { id?: string | number }): Promise<IdentityRole>;
+  abstract create(role: Omit<IdentityRole, "id"> & { id?: TId }): Promise<IdentityRole>;
 
   /**
    * Updates an existing role definition.
@@ -150,12 +150,12 @@ export abstract class RoleStore {
    * @param id - Technical identifier of the role to update.
    * @param role - Partial role object containing the fields to modify.
    */
-  abstract update(id: string | number, role: Partial<Omit<IdentityRole, "id">>): Promise<void>;
+  abstract update(id: TId, role: Partial<Omit<IdentityRole, "id">>): Promise<void>;
 
   /**
    * Removes a role from the system.
    * 
    * @param id - Technical identifier of the role to delete.
    */
-  abstract delete(id: string | number): Promise<void>;
+  abstract delete(id: TId): Promise<void>;
 }

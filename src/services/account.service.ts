@@ -12,9 +12,9 @@ import type { IdentityAccount } from "../types";
  * @injectable
  */
 @injectable()
-export class AccountService {
+export class AccountService<TId = any, TLinkedId = any, TRoleId = any> {
   constructor(
-    public readonly store: IdentityStore
+    public readonly store: IdentityStore<TId, TLinkedId, TRoleId>
   ) {}
 
   /**
@@ -23,7 +23,7 @@ export class AccountService {
    * @param roleId - The role identifier.
    * @returns A promise resolving to an array of accounts.
    */
-  async findByRole(roleId: string | number): Promise<IdentityAccount[]> {
+  async findByRole(roleId: TRoleId): Promise<IdentityAccount[]> {
     return this.store.findByRole(roleId);
   }
 
@@ -35,9 +35,10 @@ export class AccountService {
   async findBanned(): Promise<IdentityAccount[]> {
     return this.store.findBanned();
   }
+
   async assignRole(
-    accountId: string | number, 
-    roleId: string | number,
+    accountId: TId, 
+    roleId: TRoleId,
     options: { clearCustomPermissions?: boolean } = {}
   ): Promise<void> {
     const updateData: Partial<IdentityAccount> = { roleId };
@@ -57,11 +58,11 @@ export class AccountService {
    * @param roleStore - Required to resolve the role's base permissions.
    */
   async hasPermission(
-    accountId: string | number, 
+    linkedID: TLinkedId, 
     permission: string,
     roleStore: RoleStore
   ): Promise<boolean> {
-    const account = await this.store.findByLinkedId(String(accountId));
+    const account = await this.store.findByLinkedId(linkedID);
     if (!account) return false;
 
     if (!account.roleId) return account.customPermissions.includes(permission);
@@ -88,14 +89,14 @@ export class AccountService {
    * @param accountId - The linked ID of the account.
    * @param permission - The permission string to grant.
    */
-  async addCustomPermission(accountId: string, permission: string): Promise<void> {
-    const account = await this.store.findByLinkedId(accountId);
+  async addCustomPermission(linkedID: TLinkedId, permission: string): Promise<void> {
+    const account = await this.store.findByLinkedId(linkedID);
     if (!account) return;
 
     const permissions = new Set(account.customPermissions);
     permissions.add(permission);
 
-    await this.store.update(accountId, {
+    await this.store.update(account.id, {
       customPermissions: Array.from(permissions),
     });
   }
@@ -106,17 +107,17 @@ export class AccountService {
    * To explicitly deny a permission that a role might grant, use the `-` prefix 
    * (e.g., `-chat.use`).
    * 
-   * @param accountId - The linked ID of the account.
+   * @param linkedID - The linked ID of the account.
    * @param permission - The permission string to remove or revoke.
    */
-  async removeCustomPermission(accountId: string, permission: string): Promise<void> {
-    const account = await this.store.findByLinkedId(accountId);
+  async removeCustomPermission(linkedID: TLinkedId, permission: string): Promise<void> {
+    const account = await this.store.findByLinkedId(linkedID);
     if (!account) return;
 
     const permissions = new Set(account.customPermissions);
     permissions.delete(permission);
 
-    await this.store.update(accountId, {
+    await this.store.update(account.id, {
       customPermissions: Array.from(permissions),
     });
   }
@@ -128,7 +129,7 @@ export class AccountService {
    * @param options - Ban details including optional reason and duration.
    */
   async ban(
-    accountId: string,
+    accountId: TId,
     options: { reason?: string; durationMs?: number } = {}
   ): Promise<void> {
     const expiresAt = options.durationMs
@@ -143,7 +144,7 @@ export class AccountService {
    * 
    * @param accountId - The linked ID of the account.
    */
-  async unban(accountId: string): Promise<void> {
+  async unban(accountId: TId): Promise<void> {
     await this.store.setBan(accountId, false);
   }
 }

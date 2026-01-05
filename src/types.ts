@@ -31,11 +31,11 @@ export type PrincipalMode = "roles" | "db" | "api";
  * 
  * @public
  */
-export interface IdentityRole {
+export interface IdentityRole<TId = any> {
   /** 
    * Technical identifier for the role (e.g., 'admin', 1, 'uuid').
    */
-  id: string | number;
+  id: TId;
 
   /** 
    * Hierarchical weight. 
@@ -130,11 +130,11 @@ export interface IdentityOptions {
  * 
  * @public
  */
-export interface IdentityAccount {
+export interface IdentityAccount<TId = any, TRoleId = any> {
   /** 
    * Internal unique database/store ID.
    */
-  id: string | number;
+  id: TId;
 
   /** 
    * Primary connection identifier (e.g., 'license:123...').
@@ -144,7 +144,7 @@ export interface IdentityAccount {
   /** 
    * Current technical role ID assigned to this account.
    */
-  roleId?: string | number;
+  roleId?: TRoleId;
 
   /** 
    * Optional technical username for credentials-based authentication.

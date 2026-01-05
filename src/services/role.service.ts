@@ -13,9 +13,9 @@ import type { IdentityRole } from "../types";
  * @injectable
  */
 @injectable()
-export class RoleService {
+export class RoleService<TId = any> {
   constructor(
-    public readonly store: RoleStore
+    public readonly store: RoleStore<TId>
   ) {}
 
   /**
@@ -45,7 +45,7 @@ export class RoleService {
    * @param requiredRoleId - The required role.
    * @returns True if roleId has equal or higher rank.
    */
-  async isHigherOrEqual(roleId: string | number, requiredRoleId: string | number): Promise<boolean> {
+  async isHigherOrEqual(roleId: TId, requiredRoleId: TId): Promise<boolean> {
     const [role, required] = await Promise.all([
       this.store.findById(roleId),
       this.store.findById(requiredRoleId)
