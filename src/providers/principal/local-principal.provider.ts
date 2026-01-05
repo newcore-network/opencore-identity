@@ -119,7 +119,10 @@ export class IdentityPrincipalProvider extends Server.PrincipalProviderContract 
     if (!role) {
       const defaultRoleId = this.options.principal.defaultRole;
       if (defaultRoleId !== undefined && defaultRoleId !== null && defaultRoleId !== "") {
-        role = this.options.principal.roles?.[defaultRoleId];
+        // We ensure defaultRoleId is a valid key (string | number) because Identity.install
+        // converts any IdentityRole object into a registered 'default_auto' string ID.
+        const roleKey = typeof defaultRoleId === "object" ? "default_auto" : defaultRoleId;
+        role = this.options.principal.roles?.[roleKey];
         
         if (!role && this.roleStore && this.options.principal.mode === "db") {
           role = await this.roleStore.getDefaultRole();

@@ -104,9 +104,64 @@ export namespace Identity {
     // Configure Principal SPI based on mode
     if (options.principal.mode === "api") {
       Server.setPrincipalProvider(ApiPrincipalImpl);
+      
+      if (options.principal.defaultRole && typeof options.principal.defaultRole !== "string") {
+        throw new Error(
+          "[OpenCore-Identity] In 'api' principal mode, 'defaultRole' must be a string (the ID returned by the API)."
+        );
+      }
     } else {
       Server.setPrincipalProvider(PrincipalProviderImpl);
+
+      // Handle default role auto-creation or validation
+      const defaultRole = options.principal.defaultRole;
+      if (typeof defaultRole === "object") {
+        const roles = options.principal.roles || {};
+        const defaultId = "default_auto";
+        
+        // Inject the role into the configuration if it doesn't exist
+        if (!roles[defaultId]) {
+          options.principal.roles = {
+            ...roles,
+            [defaultId]: { ...defaultRole, id: defaultId } as RoleType,
+          };
+          options.principal.defaultRole = defaultId;
+          console.log(`[OpenCore-Identity] Default role '${defaultId}' created from configuration.`);
+        }
+      }
     }
+
+    // Handle onReady and waitFor
+    const runInitialization = async () => {
+      // 1. Wait for dependencies if specified
+      if (options.hooks?.waitFor) {
+        const waits = Array.isArray(options.hooks.waitFor) 
+          ? options.hooks.waitFor 
+          : [options.hooks.waitFor];
+        
+        try {
+          await Promise.all(waits);
+        } catch (err) {
+          console.error("[OpenCore-Identity] Error waiting for dependencies in 'waitFor':", err);
+          return;
+        }
+      }
+
+      // 2. Execute onReady hook
+      if (options.hooks?.onReady) {
+        const accounts = container.resolve(AccountServiceImpl);
+        const roles = container.resolve(RoleServiceImpl);
+        
+        try {
+          await options.hooks.onReady({ accounts, roles });
+        } catch (err) {
+          console.error("[OpenCore-Identity] Error in onReady hook:", err);
+        }
+      }
+    };
+
+    // Execute the async flow without blocking the main install call
+    runInitialization();
   }
 
   // Export Types

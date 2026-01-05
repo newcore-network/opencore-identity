@@ -87,6 +87,16 @@ export interface IdentityOptions {
      * @defaultValue 'license'
      */
     primaryIdentifier?: string;
+
+    /** 
+     * The ID of the role assigned to newly created accounts.
+     * 
+     * - If string/number: Used as the ID of an existing role.
+     * - If IdentityRole object without ID: A default role will be created automatically.
+     * 
+     * @defaultValue 'user'
+     */
+    defaultRole?: string | number | Omit<IdentityRole, "id">;
   };
 
   /** 
@@ -106,10 +116,10 @@ export interface IdentityOptions {
     roles?: Record<string | number, IdentityRole>;
 
     /** 
-     * The ID of the role assigned to newly created accounts.
-     * @defaultValue 'user'
+     * The default role, if you set a ID (external ID) use string type
+     * or use IdentityRole without id to create a new
      */
-    defaultRole?: string | number;
+    defaultRole?: Omit<IdentityRole, 'id'> | string;
 
     /** 
      * Time-to-live in milliseconds for cached principal data.
@@ -119,6 +129,26 @@ export interface IdentityOptions {
      * @defaultValue 300000 (5 minutes)
      */
     cacheTtl?: number;
+  };
+
+  /**
+   * Lifecycle hooks for the identity system.
+   */
+  hooks?: {
+    /**
+     * Optional promise or array of promises to wait for before finishing initialization.
+     * Useful for ensuring database connections are established.
+     */
+    waitFor?: Promise<any> | Promise<any>[];
+
+    /**
+     * Fired when the identity system is fully initialized and registered.
+     * Use this to perform database seeding (e.g., creating default roles).
+     */
+    onReady?: (services: {
+      accounts: any; // Type-erased to avoid circular dependency in index.ts
+      roles: any;
+    }) => Promise<void> | void;
   };
 }
 
