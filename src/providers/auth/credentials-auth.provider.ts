@@ -1,10 +1,10 @@
 import { injectable, inject } from "tsyringe";
 import { Server } from "@open-core/framework";
-import * as bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { IDENTITY_OPTIONS } from "../../tokens";
 import { IdentityStore } from "../../contracts";
 import type { IdentityOptions, IdentityAccount } from "../../types";
+import bcrypt from "bcryptjs";
 
 /**
  * Authentication provider for username and password credentials.
