@@ -29,11 +29,11 @@ export class RoleService {
   /**
    * Persists a new security role definition.
    * 
-   * @param role - The complete role definition to create.
-   * @returns A promise that resolves when the role is saved.
+   * @param role - The initial role properties (ID is optional).
+   * @returns A promise resolving to the created role.
    */
-  async create(role: IdentityRole): Promise<void> {
-    await this.store.save(role);
+  async create(role: Omit<IdentityRole, "id"> & { id?: string | number }): Promise<IdentityRole> {
+    return this.store.create(role);
   }
 
   /**
@@ -44,13 +44,7 @@ export class RoleService {
    * @returns A promise that resolves when the update is complete.
    */
   async update(id: string | number, data: Partial<Omit<IdentityRole, "id">>): Promise<void> {
-    const existing = await this.store.findById(id);
-    if (!existing) return;
-
-    await this.store.save({
-      ...existing,
-      ...data,
-    });
+    await this.store.update(id, data);
   }
 
   /**

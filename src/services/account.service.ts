@@ -40,13 +40,34 @@ export class AccountService {
   }
 
   /**
+   * Persists a new identity account.
+   * 
+   * @param data - Initial account properties. ID can be provided or left to the store.
+   * @returns A promise resolving to the fully created account object.
+   */
+  async create(data: Omit<IdentityAccount, "id"> & { id?: string | number; passwordHash?: string }): Promise<IdentityAccount> {
+    return this.store.create(data);
+  }
+
+  /**
+   * Updates an existing account's metadata or status.
+   * 
+   * @param id - The internal account ID.
+   * @param data - Partial object containing fields to update.
+   * @returns A promise that resolves when the update is complete.
+   */
+  async update(id: string | number, data: Partial<Omit<IdentityAccount, "id">>): Promise<void> {
+    await this.store.update(id, data);
+  }
+
+  /**
    * Assigns a security role to an account.
    * 
    * @param accountId - The unique ID of the account.
    * @param roleId - Technical identifier of the role to assign.
    */
   async assignRole(accountId: string | number, roleId: string | number): Promise<void> {
-    await this.store.update(accountId, { roleId });
+    await this.update(accountId, { roleId });
   }
 
   /**

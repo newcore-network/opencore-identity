@@ -37,10 +37,10 @@ export abstract class IdentityStore {
   /**
    * Persists a new identity account.
    * 
-   * @param data - Initial account properties.
+   * @param data - Initial account properties (ID is optional as it's usually handled by the store).
    * @returns A promise resolving to the fully created account object.
    */
-  abstract create(data: Partial<IdentityAccount> & { passwordHash?: string }): Promise<IdentityAccount>;
+  abstract create(data: Omit<IdentityAccount, "id"> & { id?: string | number; passwordHash?: string }): Promise<IdentityAccount>;
 
   /**
    * Updates an existing account's metadata or status.
@@ -48,7 +48,7 @@ export abstract class IdentityStore {
    * @param id - The internal account ID.
    * @param data - Partial object containing fields to update.
    */
-  abstract update(id: string | number, data: Partial<IdentityAccount>): Promise<void>;
+  abstract update(id: string | number, data: Partial<Omit<IdentityAccount, "id">>): Promise<void>;
 
   /**
    * Prohibits or allows an account from connecting.
@@ -91,11 +91,20 @@ export abstract class RoleStore {
   abstract getDefaultRole(): Promise<IdentityRole>;
 
   /**
-   * Creates or updates a role definition.
+   * Persists a new security role definition.
    * 
-   * @param role - The complete role object.
+   * @param role - Initial role properties. ID can be provided or left to the store.
+   * @returns A promise resolving to the fully created role object.
    */
-  abstract save(role: IdentityRole): Promise<void>;
+  abstract create(role: Omit<IdentityRole, "id"> & { id?: string | number }): Promise<IdentityRole>;
+
+  /**
+   * Updates an existing role definition.
+   * 
+   * @param id - Technical identifier of the role to update.
+   * @param role - Partial role object containing the fields to modify.
+   */
+  abstract update(id: string | number, role: Partial<Omit<IdentityRole, "id">>): Promise<void>;
 
   /**
    * Removes a role from the system.

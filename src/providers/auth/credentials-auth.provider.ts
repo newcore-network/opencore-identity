@@ -109,6 +109,8 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
       passwordHash,
       identifier: primaryIdentifier,
       roleId: this.options.principal.defaultRole || "user",
+      customPermissions: [],
+      isBanned: false,
     });
 
     const accountIdStr = String(account.id);

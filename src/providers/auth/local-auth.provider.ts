@@ -140,6 +140,8 @@ export class LocalAuthProvider extends Server.AuthProviderContract {
       account = await this.store.create({
         identifier: identifierValue,
         roleId: "user",
+        customPermissions: [],
+        isBanned: false,
       });
       isNew = true;
     }
