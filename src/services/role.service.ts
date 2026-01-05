@@ -39,12 +39,12 @@ export class RoleService {
   /**
    * Updates an existing role's rank or permissions.
    * 
-   * @param name - The unique technical name of the role to update.
+   * @param id - The unique technical identifier of the role to update.
    * @param data - Partial object containing the fields to modify.
    * @returns A promise that resolves when the update is complete.
    */
-  async update(name: string, data: Partial<Omit<IdentityRole, "name">>): Promise<void> {
-    const existing = await this.store.findByName(name);
+  async update(id: string | number, data: Partial<Omit<IdentityRole, "id">>): Promise<void> {
+    const existing = await this.store.findById(id);
     if (!existing) return;
 
     await this.store.save({
@@ -56,21 +56,21 @@ export class RoleService {
   /**
    * Permanently removes a role definition from the system.
    * 
-   * @param name - The technical name of the role to delete.
+   * @param id - The technical identifier of the role to delete.
    * @returns A promise that resolves when the role is deleted.
    */
-  async delete(name: string): Promise<void> {
-    await this.store.delete(name);
+  async delete(id: string | number): Promise<void> {
+    await this.store.delete(id);
   }
 
   /**
    * Retrieves the full list of permissions granted to a specific role.
    * 
-   * @param name - The technical name of the role.
+   * @param id - The technical identifier of the role.
    * @returns A promise resolving to an array of permission strings.
    */
-  async getPermissions(name: string): Promise<string[]> {
-    const role = await this.store.findByName(name);
+  async getPermissions(id: string | number): Promise<string[]> {
+    const role = await this.store.findById(id);
     return role?.permissions || [];
   }
 }

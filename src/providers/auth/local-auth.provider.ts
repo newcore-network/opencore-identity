@@ -103,7 +103,7 @@ export class LocalAuthProvider extends Server.AuthProviderContract {
       return { success: false, error: account.banReason ?? "Account is banned" };
     }
 
-    return { success: true, accountID: account.linkedId };
+    return { success: true, accountID: String(account.id) };
   }
 
   /**
@@ -139,8 +139,7 @@ export class LocalAuthProvider extends Server.AuthProviderContract {
 
       account = await this.store.create({
         identifier: identifierValue,
-        linkedId: uuidv4(),
-        roleName: "user",
+        roleId: "user",
       });
       isNew = true;
     }
@@ -156,8 +155,9 @@ export class LocalAuthProvider extends Server.AuthProviderContract {
       }
     }
 
-    player.linkAccount(account.linkedId);
-    return { success: true, accountID: account.linkedId, isNewAccount: isNew };
+    const accountIdStr = String(account.id);
+    player.linkAccount(accountIdStr);
+    return { success: true, accountID: accountIdStr, isNewAccount: isNew };
   }
 
   /**

@@ -71,8 +71,9 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
       return { success: false, error: account.banReason ?? "Account is banned" };
     }
 
-    player.linkAccount(account.linkedId);
-    return { success: true, accountID: account.linkedId };
+    const accountIdStr = String(account.id);
+    player.linkAccount(accountIdStr);
+    return { success: true, accountID: accountIdStr };
   }
 
   /**
@@ -107,12 +108,12 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
       username,
       passwordHash,
       identifier: primaryIdentifier,
-      linkedId: uuidv4(),
-      roleName: this.options.principal.defaultRole || "user",
+      roleId: this.options.principal.defaultRole || "user",
     });
 
-    player.linkAccount(account.linkedId);
-    return { success: true, accountID: account.linkedId, isNewAccount: true };
+    const accountIdStr = String(account.id);
+    player.linkAccount(accountIdStr);
+    return { success: true, accountID: accountIdStr, isNewAccount: true };
   }
 
   /**
@@ -130,7 +131,7 @@ export class CredentialsAuthProvider extends Server.AuthProviderContract {
       return { success: false, error: "Session invalid or account banned" };
     }
 
-    return { success: true, accountID: account.linkedId };
+    return { success: true, accountID: String(account.id) };
   }
 
   /**

@@ -42,11 +42,11 @@ export class AccountService {
   /**
    * Assigns a security role to an account.
    * 
-   * @param accountId - The linked ID of the account.
-   * @param roleName - Technical name of the role to assign.
+   * @param accountId - The unique ID of the account.
+   * @param roleId - Technical identifier of the role to assign.
    */
-  async assignRole(accountId: string, roleName: string): Promise<void> {
-    await this.store.update(accountId, { roleName });
+  async assignRole(accountId: string | number, roleId: string | number): Promise<void> {
+    await this.store.update(accountId, { roleId });
   }
 
   /**
