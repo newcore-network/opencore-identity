@@ -1,8 +1,9 @@
-import { Server } from "@open-core/framework";
+import { Server } from "@open-core/framework/server";
 import { IDENTITY_OPTIONS } from "./tokens";
 import { LocalAuthProvider as LocalAuthImpl } from "./providers/auth/local-auth.provider";
 import { CredentialsAuthProvider as CredentialsAuthImpl } from "./providers/auth/credentials-auth.provider";
 import { ApiAuthProvider as ApiAuthImpl } from "./providers/auth/api-auth.provider";
+import { AuthService } from "./auth.service";
 import { IdentityPrincipalProvider as PrincipalProviderImpl } from "./providers/principal/local-principal.provider";
 import { ApiPrincipalProvider as ApiPrincipalImpl } from "./providers/principal/api-principal.provider";
 import { AccountService as AccountServiceImpl } from "./services/account.service";
@@ -34,7 +35,11 @@ export namespace Identity {
   export function setIdentityStore(store: { new (...args: any[]): IdentityStoreContract }): void {
     const container = (globalThis as any).oc_container;
     if (!container) throwContainerError();
+    
+    // Unregister existing if any and register new singleton
+    container.unregister(IdentityStoreContract);
     container.registerSingleton(IdentityStoreContract, store);
+    console.log(`[OpenCore-Identity] IdentityStore registered: ${store.name}`);
   }
 
   /**
@@ -46,21 +51,24 @@ export namespace Identity {
   export function setRoleStore(store: { new (...args: any[]): RoleStoreContract }): void {
     const container = (globalThis as any).oc_container;
     if (!container) throwContainerError();
+    
+    container.unregister(RoleStoreContract);
     container.registerSingleton(RoleStoreContract, store);
+    console.log(`[OpenCore-Identity] RoleStore registered: ${store.name}`);
   }
 
   function throwContainerError(): never {
     throw new Error(
       "[OpenCore-Identity] Global container (globalThis.oc_container) not found. " +
-        "Ensure the framework is initialized before installing plugins.",
+        "Ensure the framework is installed.",
     );
   }
 
   /**
    * Installs the Identity plugin into the OpenCore Framework.
    *
-   * This function registers the necessary Authentication and Principal providers
-   * into the framework's SPI via `Server.setAuthProvider` and `Server.setPrincipalProvider`.
+    * This function registers the necessary Authentication service and Principal provider
+    * into the framework's SPI via dependency injection and `Server.setPrincipalProvider`.
    *
    * @param options - Configuration options for the identity system.
    *
@@ -92,17 +100,23 @@ export namespace Identity {
     container.registerSingleton(AccountServiceImpl);
     container.registerSingleton(RoleServiceImpl);
 
-    // Configure Auth SPI based on mode
+    // Configure Auth Service based on mode
     if (options.auth.mode === "api") {
-      Server.setAuthProvider(ApiAuthImpl);
+      if (!options.auth.api?.baseUrl) {
+        throw new Error("[OpenCore-Identity] In 'api' auth mode, 'auth.api.baseUrl' is required.");
+      }
+      container.registerSingleton(AuthService, ApiAuthImpl);
     } else if (options.auth.mode === "credentials") {
-      Server.setAuthProvider(CredentialsAuthImpl);
+      container.registerSingleton(AuthService, CredentialsAuthImpl);
     } else {
-      Server.setAuthProvider(LocalAuthImpl);
+      container.registerSingleton(AuthService, LocalAuthImpl);
     }
 
     // Configure Principal SPI based on mode
     if (options.principal.mode === "api") {
+      if (!options.principal.api?.baseUrl) {
+        throw new Error("[OpenCore-Identity] In 'api' principal mode, 'principal.api.baseUrl' is required.");
+      }
       Server.setPrincipalProvider(ApiPrincipalImpl);
       
       if (options.principal.defaultRole && typeof options.principal.defaultRole !== "string") {
@@ -149,8 +163,8 @@ export namespace Identity {
 
       // 2. Execute onReady hook
       if (options.hooks?.onReady) {
-        const accountService = container.resolve(AccountServiceImpl) as AccountService;
-        const roleService = container.resolve(RoleServiceImpl) as RoleService;
+        const accountService = container.resolve(AccountServiceImpl);
+        const roleService = container.resolve(RoleServiceImpl);
         
         try {
           await options.hooks.onReady({ accounts: accountService, roles: roleService, container });

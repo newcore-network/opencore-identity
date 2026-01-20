@@ -1,5 +1,5 @@
 import { injectable, inject } from "tsyringe";
-import { Server } from "@open-core/framework";
+import { Server } from "@open-core/framework/server";
 import { IDENTITY_OPTIONS } from "../../tokens";
 import { IdentityStore, RoleStore } from "../../contracts";
 import type { IdentityOptions, IdentityRole } from "../../types";
@@ -117,13 +117,17 @@ export class IdentityPrincipalProvider extends Server.PrincipalProviderContract 
     }
 
     if (!role) {
-      const defaultRoleId = this.options.principal.defaultRole;
-      if (defaultRoleId !== undefined && defaultRoleId !== null && defaultRoleId !== "") {
-        // We ensure defaultRoleId is a valid key (string | number) because Identity.install
-        // converts any IdentityRole object into a registered 'default_auto' string ID.
-        const roleKey = typeof defaultRoleId === "object" ? "default_auto" : defaultRoleId;
-        role = this.options.principal.roles?.[roleKey];
+      const defaultRoleOption = this.options.principal.defaultRole;
+      if (defaultRoleOption !== undefined && defaultRoleOption !== null && defaultRoleOption !== "") {
+        // 1. Try to resolve from static roles if it's an ID
+        if (typeof defaultRoleOption === "string") {
+          role = this.options.principal.roles?.[defaultRoleOption];
+        } else {
+          // It was an object that should have been registered as 'default_auto'
+          role = this.options.principal.roles?.["default_auto"];
+        }
         
+        // 2. If still not found and in DB mode, ask the store
         if (!role && this.roleStore && this.options.principal.mode === "db") {
           role = await this.roleStore.getDefaultRole();
         }

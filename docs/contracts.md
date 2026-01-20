@@ -6,6 +6,11 @@ To persist player accounts and roles, you must implement the `IdentityStore` and
 
 The `IdentityStore` is the most important contract. It handles looking up and saving account data.
 
+Minimum required:
+
+- `findByIdentifier`, `findByLinkedId`, `findByUsername` for auth.
+- `create`, `update`, `setBan` for the full flow.
+
 ### Example: Prisma Implementation
 
 ```ts
@@ -37,12 +42,14 @@ export class PrismaIdentityStore extends IdentityStore {
   private mapToAccount(dbUser: any): IdentityAccount {
     return {
       id: dbUser.id.toString(),
-      linkedId: dbUser.linkedId,
       identifier: dbUser.identifier,
-      roleName: dbUser.roleName,
+      roleId: dbUser.roleId,
+      username: dbUser.username,
+      passwordHash: dbUser.passwordHash,
       customPermissions: dbUser.permissions || [],
       isBanned: dbUser.banned,
-      // ...
+      banReason: dbUser.banReason,
+      banExpiresAt: dbUser.banExpiresAt,
     };
   }
 }
@@ -72,7 +79,7 @@ Only required if `principal.mode` is set to `db`. It follows the same pattern as
 import { Identity, RoleStore } from "@open-core/identity";
 
 class MyRoleStore extends RoleStore {
-    // ... Implement findByName, getDefaultRole, save, delete ...
+  // ... Implement findByName, getDefaultRole, save, delete ...
 }
 
 Identity.setRoleStore(MyRoleStore);

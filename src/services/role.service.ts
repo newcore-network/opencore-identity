@@ -54,4 +54,14 @@ export class RoleService<TId = any> {
     if (!role || !required) return false;
     return role.rank >= required.rank;
   }
+
+  /**
+   * Updates the permissions assigned to a role.
+   * 
+   * @param roleId - The role identifier.
+   * @param permissions - The new list of permissions.
+   */
+  async setPermissions(roleId: TId, permissions: string[]): Promise<void> {
+    await this.store.update(roleId, { permissions });
+  }
 }

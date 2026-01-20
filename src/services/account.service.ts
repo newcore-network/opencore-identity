@@ -65,18 +65,21 @@ export class AccountService<TId = any, TLinkedId = any, TRoleId = any> {
     const account = await this.store.findByLinkedId(linkedID);
     if (!account) return false;
 
-    if (!account.roleId) return account.customPermissions.includes(permission);
-
-    const role = await roleStore.findById(account.roleId);
-    const basePermissions = role?.permissions || [];
-    
-    // Simple resolution logic (could be more complex with wildcards)
-    const permissions = new Set(basePermissions);
-    for (const override of account.customPermissions) {
-      if (override === `+${permission}` || override === permission) return true;
-      if (override === `-${permission}`) return false;
+    let basePermissions: string[] = [];
+    if (account.roleId) {
+      const role = await roleStore.findById(account.roleId);
+      basePermissions = role?.permissions || [];
     }
     
+    // Check for explicit revocation first
+    if (account.customPermissions.includes(`-${permission}`)) return false;
+    
+    // Check for explicit grant or wildcard in custom permissions
+    if (account.customPermissions.includes(`+${permission}`) || account.customPermissions.includes(permission)) return true;
+    if (account.customPermissions.includes("*")) return true;
+
+    // Check base permissions from role
+    const permissions = new Set(basePermissions);
     return permissions.has(permission) || permissions.has("*");
   }
 
@@ -93,7 +96,12 @@ export class AccountService<TId = any, TLinkedId = any, TRoleId = any> {
     const account = await this.store.findByLinkedId(linkedID);
     if (!account) return;
 
+    // Remove revocation if it exists
+    const cleanPermission = permission.startsWith("+") ? permission.substring(1) : permission;
+    const revokation = `-${cleanPermission}`;
+    
     const permissions = new Set(account.customPermissions);
+    permissions.delete(revokation);
     permissions.add(permission);
 
     await this.store.update(account.id, {
