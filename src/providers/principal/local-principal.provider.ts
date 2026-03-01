@@ -1,5 +1,5 @@
 import { injectable, inject } from "tsyringe";
-import { Server } from "@open-core/framework/server";
+import { Server, Principal, PrincipalProviderContract } from "@open-core/framework/server";
 import { IDENTITY_OPTIONS } from "../../tokens";
 import { IdentityStore, RoleStore } from "../../contracts";
 import type { IdentityOptions, IdentityRole } from "../../types";
@@ -16,12 +16,12 @@ import type { IdentityOptions, IdentityRole } from "../../types";
  * @public
  */
 @injectable()
-export class IdentityPrincipalProvider extends Server.PrincipalProviderContract {
+export class IdentityPrincipalProvider extends PrincipalProviderContract {
   /** 
    * In-memory cache for resolved principals.
    * Key: clientId (number)
    */
-  private readonly cache = new Map<number, { principal: Server.Principal; expiresAt: number }>();
+  private readonly cache = new Map<number, { principal: Principal; expiresAt: number }>();
   
   /** Cache TTL in milliseconds */
   private readonly cacheTtl: number;
@@ -49,9 +49,9 @@ export class IdentityPrincipalProvider extends Server.PrincipalProviderContract 
    * it resolves the account and its effective permissions.
    * 
    * @param player - The framework player entity.
-   * @returns A promise resolving to the {@link Server.Principal} or null if not authenticated.
+   * @returns A promise resolving to the {@link Principal} or null if not authenticated.
    */
-  async getPrincipal(player: Server.Player): Promise<Server.Principal | null> {
+  async getPrincipal(player: Server.Player): Promise<Principal | null> {
     const clientId = player.clientID;
     const cached = this.cache.get(clientId);
 
@@ -89,7 +89,7 @@ export class IdentityPrincipalProvider extends Server.PrincipalProviderContract 
    * @param linkedID - The linked account identifier.
    * @returns A promise resolving to the principal or null.
    */
-  async getPrincipalByLinkedID(linkedID: string): Promise<Server.Principal | null> {
+  async getPrincipalByLinkedID(linkedID: string): Promise<Principal | null> {
     return this.resolvePrincipal(linkedID);
   }
 
@@ -100,7 +100,7 @@ export class IdentityPrincipalProvider extends Server.PrincipalProviderContract 
    * @returns Resolves the role, merges permissions, and returns the Principal.
    * @internal
    */
-  private async resolvePrincipal(linkedId: string): Promise<Server.Principal | null> {
+  private async resolvePrincipal(linkedId: string): Promise<Principal | null> {
     const account = await this.accountStore.findByLinkedId(linkedId);
     if (!account) return null;
 

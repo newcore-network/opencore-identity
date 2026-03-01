@@ -37,7 +37,9 @@ export namespace Identity {
     if (!container) throwContainerError();
     
     // Unregister existing if any and register new singleton
-    container.unregister(IdentityStoreContract);
+    if (typeof container.unregister === 'function') {
+      container.unregister(IdentityStoreContract);
+    }
     container.registerSingleton(IdentityStoreContract, store);
     console.log(`[OpenCore-Identity] IdentityStore registered: ${store.name}`);
   }

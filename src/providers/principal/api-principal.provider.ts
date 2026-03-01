@@ -1,12 +1,12 @@
 import { injectable, inject } from "tsyringe";
-import { Server } from "@open-core/framework/server";
+import { Server, Principal, PrincipalProviderContract } from "@open-core/framework/server";
 import { IDENTITY_OPTIONS } from "../../tokens";
 import type { IdentityOptions } from "../../types";
 
 /**
  * Principal provider that resolves roles and permissions from an external HTTP API.
  * 
- * This provider implements the framework's {@link Server.PrincipalProviderContract} by 
+ * This provider implements the framework's {@link PrincipalProviderContract} by 
  * performing network requests to a remote service. It includes an in-memory cache 
  * to optimize frequent authorization checks.
  * 
@@ -14,12 +14,12 @@ import type { IdentityOptions } from "../../types";
  * @public
  */
 @injectable()
-export class ApiPrincipalProvider extends Server.PrincipalProviderContract {
+export class ApiPrincipalProvider extends PrincipalProviderContract {
   /** 
    * In-memory cache for resolved principals.
    * Key: clientId (number)
    */
-  private readonly cache = new Map<number, { principal: Server.Principal; expiresAt: number }>();
+  private readonly cache = new Map<number, { principal: Principal; expiresAt: number }>();
   
   /** Cache TTL in milliseconds */
   private readonly cacheTtl: number;
@@ -41,9 +41,9 @@ export class ApiPrincipalProvider extends Server.PrincipalProviderContract {
    * Resolves the Principal for a connected player via external API.
    * 
    * @param player - The framework player entity.
-   * @returns A promise resolving to the {@link Server.Principal} or null if not authenticated.
+   * @returns A promise resolving to the {@link Principal} or null if not authenticated.
    */
-  async getPrincipal(player: Server.Player): Promise<Server.Principal | null> {
+  async getPrincipal(player: Server.Player): Promise<Principal | null> {
     const cached = this.cache.get(player.clientID);
     if (cached && cached.expiresAt > Date.now()) return cached.principal;
 
@@ -77,14 +77,14 @@ export class ApiPrincipalProvider extends Server.PrincipalProviderContract {
    * @param linkedID - The linked account identifier.
    * @returns A promise resolving to the principal or null.
    */
-  async getPrincipalByLinkedID(linkedID: string): Promise<Server.Principal | null> {
+  async getPrincipalByLinkedID(linkedID: string): Promise<Principal | null> {
     return this.fetchPrincipal({ linkedId: linkedID, accountId: linkedID });
   }
 
   private async fetchPrincipal(payload: {
     linkedId: string;
     accountId?: string | null;
-  }): Promise<Server.Principal | null> {
+  }): Promise<Principal | null> {
     const config = this.options.principal.api;
     if (!config?.baseUrl) {
       console.warn("[OpenCore-Identity] API principal mode enabled but baseUrl is missing.");
@@ -111,7 +111,7 @@ export class ApiPrincipalProvider extends Server.PrincipalProviderContract {
 
       const data = (await response.json()) as {
         success?: boolean;
-        principal?: Server.Principal;
+        principal?: Principal;
         id?: string;
         name?: string;
         rank?: number;
@@ -143,14 +143,14 @@ export class ApiPrincipalProvider extends Server.PrincipalProviderContract {
 
   private normalizePrincipal(
     data: {
-      principal?: Server.Principal;
+      principal?: Principal;
       id?: string;
       name?: string;
       rank?: number;
       permissions?: string[];
       meta?: Record<string, unknown>;
     }
-  ): Server.Principal | null {
+  ): Principal | null {
     if (data.principal) return data.principal;
 
     if (!data.id || !Array.isArray(data.permissions)) return null;
